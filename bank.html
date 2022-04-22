@@ -1,0 +1,294 @@
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    :root {
+      --black: #333;
+      --white: #eee;
+      --red: #c26c6d;
+      --green: #98be5e;
+      --hover: #eee7ef;
+      --font: Arial, Helvetica, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--white);
+      color: var(--black);
+    }
+
+    .page {
+      width: 900px;
+      margin: 40px auto;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4 {
+      font-family: Verdana, Geneva, Tahoma, sans-serif;
+    }
+
+    .button {
+      display: inline-block;
+      border: 1px solid var(--black);
+      border-radius: 3px;
+      padding: 10px;
+      font-family: var(--font);
+    }
+
+    table {
+      border-collapse: separate;
+      border-spacing: 0 5px;
+    }
+
+    .transaction-tr > td {
+      font-family: var(--font);
+      padding: 10px;
+      border-bottom: 1px solid var(--black);
+      border-top: 1px solid var(--black);
+    }
+
+    .transaction-tr > td:first-of-type {
+      border-left: 1px solid var(--black);
+      border-top-left-radius: 3px;
+      border-bottom-left-radius: 3px;
+    }
+
+    .transaction-tr > td:last-of-type {
+      border-right: 1px solid var(--black);
+      border-top-right-radius: 3px;
+      border-bottom-right-radius: 3px;
+    }
+
+    .transaction-tr {
+      transition: transform 0.1s ease;
+    }
+
+    .transaction-tr:hover {
+      background-color: #ddcede;
+    }
+
+    .transaction-tr:active {
+      transform: translateY(3px);
+    }
+
+    .tr-selected {
+      background-color: var(--hover);
+    }
+
+    .invisible {
+      display: none;
+    }
+
+    .green {
+      color: var(--green);
+    }
+
+    .red {
+      color: var(--red);
+    }
+
+    .hover:hover {
+      background-color: var(--hover);
+    }
+
+    .bar-container {
+      height: 22px;
+      position: relative;
+      border: 1px solid var(--black);
+      border-radius: 3px;
+    }
+
+    .bar {
+      position: absolute;
+      left: 0;
+      background-color: var(--green);
+      height: 20px;
+      border-bottom-left-radius: 3px;
+      border-top-left-radius: 3px;
+      transition: width 0.2s ease;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <h1>Bankr</h1>
+    <input
+      id="filePicker"
+      type="file"
+      accept=".csv"
+      onchange="handleFileSelect()"
+    />
+    <div class="bar-container">
+      <div id="progressBar" class="bar"></div>
+    </div>
+    <table>
+      <thead style="position: sticky; top: 20px">
+        <tr>
+          <th>Dato</th>
+          <th>Melding</th>
+          <th>Beløp</th>
+          <th>Saldo etter</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+</body>
+<!-- DOM Manipulation utils-->
+<script>
+  function setAttributes(element, attrs, innerHTML) {
+    for ([key, value] of Object.entries(attrs)) {
+      element.setAttribute(key, value);
+    }
+    if (innerHTML) element.innerHTML = innerHTML;
+  }
+  function createElement(type, attrs, innerHTML) {
+    const element = document.createElement(type);
+    setAttributes(element, attrs, innerHTML);
+    return element;
+  }
+  function addChild(element, type, attrs, innerHTML) {
+    element.appendChild(createElement(type, attrs, innerHTML));
+  }
+  function removeAllChildren(element) {
+    while (element.firstChild) {
+      element.removeChild(element.firstChild);
+    }
+  }
+
+  function hide(target) {
+    target.classList.add('invisible');
+  }
+  function show(target) {
+    target.classList.remove('invisible');
+  }
+</script>
+<!-- Utils -->
+<script>
+  function* idGenerator(start) {
+    let i = start ?? 0;
+    yield i++;
+  }
+
+  function parseLocaleNumber(numberString) {
+    return parseFloat(numberString.replace('.', '').replace(',', '.'));
+  }
+
+  function formatLocaleNumber(number) {
+    const string = number.toLocaleString('nb-no', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+    return number > 0 ? ' ' + string : string;
+  }
+
+  function formatDate(date) {
+    return date.toLocaleDateString('nb-no', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+  }
+</script>
+<!-- Domenedefinisjoner -->
+<script>
+  class Category {
+    constructor(id, title) {
+      this.id = id;
+      this.title = title;
+    }
+  }
+  class Transaction {
+    static id = 0;
+    constructor(id, date, message, amount, balanceAfter, category) {
+      this.id = id;
+      this.date = date;
+      this.message = message;
+      this.amount = amount;
+      this.balanceAfter = balanceAfter;
+      this.category = category;
+    }
+    get balanceBefore() {
+      return this.balanceAfter - this.amount;
+    }
+    static fromString(line) {
+      const fields = line.split(';').map(s => s.slice(1, -1)); // remove leading and trailing "
+      const dateString = fields[0];
+      const [day, month, year] = dateString.split('.');
+      const date = new Date();
+
+      return new Transaction(
+        Transaction.id++,
+        new Date(year, month - 1, day),
+        fields[2],
+        parseLocaleNumber(fields[3]),
+        parseLocaleNumber(fields[4])
+      );
+    }
+  }
+</script>
+<!-- Globale variabler -->
+<script>
+  let queue = [];
+</script>
+
+<!-- Event handlers? -->
+<script>
+  function handleFileSelect() {
+    const file = document.getElementById('filePicker').files[0];
+    const reader = new FileReader();
+    reader.onload = () => {
+      queue = reader.result
+        .split('\r\n')
+        .filter(line => line.length > 0)
+        .map(Transaction.fromString);
+      fillTable(queue);
+    };
+    reader.readAsText(file);
+  }
+
+  const selectedTransactions = new Set();
+  function handleTrClick(transactionId) {
+    const element = document.getElementById(`transaction-tr-${transactionId}`);
+    if (selectedTransactions.has(transactionId)) {
+      selectedTransactions.delete(transactionId);
+      element.classList.remove('tr-selected');
+    } else {
+      selectedTransactions.add(transactionId);
+      element.classList.add('tr-selected');
+    }
+    document.getElementById('progressBar').style.width =
+      (100 * selectedTransactions.size) / queue.length + '%';
+  }
+</script>
+<!-- ??? -->
+<script>
+  function fillTable(transactions) {
+    const body = document.getElementById('tableBody');
+    for (transaction of transactions) {
+      const tr = createElement('tr', {
+        id: `transaction-tr-${transaction.id}`,
+        class: 'transaction-tr',
+        tabindex: 0,
+        onclick: `handleTrClick(${transaction.id})`,
+      });
+      addChild(tr, 'td', {}, formatDate(transaction.date));
+      addChild(tr, 'td', {}, transaction.message);
+      addChild(
+        tr,
+        'td',
+        { class: transaction.amount > 0 ? 'green' : 'red' },
+        formatLocaleNumber(transaction.amount)
+      );
+      addChild(tr, 'td', {}, formatLocaleNumber(transaction.balanceAfter));
+      body.appendChild(tr);
+    }
+  }
+</script>

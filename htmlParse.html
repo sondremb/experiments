@@ -1,0 +1,146 @@
+<html>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
+
+<script>
+  `TODO:
+     - end attribute and end opening tag, e.g. key="value"/>
+     - text/innerHTML
+     - values using $ {} syntax
+     - stricter state handling
+  `;
+  class Token {
+    static FULL_OPEN = 'FULL_OPEN';
+    static OPEN = 'OPEN';
+    static CLOSE = 'CLOSE';
+    static SELF_CLOSE = 'SELF_CLOSE';
+    static AUTO_CLOSE = 'AUTO_CLOSE';
+    static FULL_ATTRIBUTE = 'FULL_ATTRIBUTE';
+    static START_ATTRIBUTE = 'START_ATTRIBUTE';
+    static END_ATTRIBUTE = 'END_ATTRIBUTE';
+    static OTHER = 'OTHER';
+    constructor(string) {
+      let match = string.match(/^<([a-zA-Z]+)\/>$/);
+      if (match) {
+        this.type = Token.AUTO_CLOSE;
+        this.htmlType = match[1];
+        return;
+      }
+
+      match = string.match(/^<([a-zA-Z]+)$/);
+      if (match) {
+        this.type = Token.OPEN;
+        this.htmlType = match[1];
+        return;
+      }
+
+      match = string.match(/^<([a-zA-Z]+)>$/);
+      if (match) {
+        this.type = Token.FULL_OPEN;
+        this.htmlType = match[1];
+        return;
+      }
+
+      match = string.match(/^<\/([a-zA-Z]+)>$/);
+      if (match) {
+        this.type = Token.CLOSE;
+        this.htmlType = match[1];
+        return;
+      }
+
+      if (string === '/>') {
+        this.type = Token.SELF_CLOSE;
+        return;
+      }
+
+      match = string.match(/^([\w-]+)="(.*)"$/);
+      if (match) {
+        this.type = Token.FULL_ATTRIBUTE;
+        this.key = match[1];
+        this.value = match[2];
+        return;
+      }
+
+      match = string.match(/^([\w-]+)="(.*)$/);
+      if (match) {
+        this.type = Token.START_ATTRIBUTE;
+        this.key = match[1];
+        this.value = match[2];
+        return;
+      }
+
+      match = string.match(/^(.*)"$/);
+      if (match) {
+        this.type = Token.END_ATTRIBUTE;
+        this.value = match[1];
+        return;
+      }
+
+      this.type = Token.OTHER;
+      this.value = string;
+    }
+  }
+  class Node {
+    constructor(type, parent) {
+      this.type = type;
+      this.parent = parent;
+      this.element = document.createElement(type);
+      if (this.parent) this.parent.element.appendChild(this.element);
+    }
+  }
+  function parse(tokens) {
+    const [head, ...tail] = tokens;
+    if (!head.type === Token.OPEN) {
+      throw 'First token must be opening tag';
+    }
+    let currentKey;
+    let currentValue;
+    const root = new Node(head.htmlType, null);
+    let current = root;
+    for (token of tail) {
+      if (token.type === Token.START_ATTRIBUTE) {
+        currentKey = token.key;
+        currentValue = token.value;
+      } else if (token.type === Token.OTHER) {
+        currentValue += ' ' + token.value;
+      } else if (token.type === Token.END_ATTRIBUTE) {
+        currentValue += ' ' + token.value;
+        current.element.setAttribute(currentKey, currentValue);
+      } else if (token.type === Token.FULL_ATTRIBUTE) {
+        current.element.setAttribute(token.key, token.value);
+      } else if (token.type === Token.OPEN || token.type === Token.FULL_OPEN) {
+        current = new Node(token.htmlType, current);
+      } else if (token.type === Token.CLOSE) {
+        if (!token.htmlType === current.type) {
+          throw `Expected closing ${current.type}, got ${token.htmlType}`;
+        }
+        current = current.parent;
+      } else if (token.type === Token.SELF_CLOSE) {
+        if (current !== root) current = current.parent;
+      }
+    }
+    return root;
+  }
+  function html(strings) {
+    const tokens = strings[0].split(/\s/).filter(s => s.length > 0);
+    console.log(tokens);
+    const ttokens = tokens.map(s => new Token(s));
+    console.log(ttokens);
+    const rootNode = parse(ttokens);
+    console.log(rootNode);
+    document.getElementById('root').appendChild(rootNode.element);
+  }
+  html`
+    <div>
+      <br />
+      <br />
+      <div>
+        <a href="hehe" />
+        <div class="multiple class names" />
+      </div>
+      <button onclick="alert(poop)"></button>
+    </div>
+  `;
+</script>

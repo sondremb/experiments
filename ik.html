@@ -1,0 +1,33 @@
+<html>
+  <svg id="svg"></svg>
+</html>
+<script>
+  const Point = (x, y) => ({ x, y });
+  const Joint = (start, length, angle, child) => ({
+    start,
+    length,
+    angle,
+    child,
+    end: Point(
+      this.start.x + Math.cos(angle) * length,
+      this.start.y + Math.sin(angle) * length
+    ),
+    rotate: function (angle) {
+      this.angle = angle;
+      this.update();
+    },
+    move: function (pos) {
+      this.start = pos;
+      this.update();
+    },
+    update: function () {
+      this.end = Point(
+        this.start.x + Math.cos(this.angle) * this.length,
+        this.start.y + Math.sin(this.angle) * this.length
+      );
+      if (this.child) {
+        this.child.move(this.end);
+      }
+    },
+  });
+</script>

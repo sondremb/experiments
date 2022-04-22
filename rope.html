@@ -1,0 +1,244 @@
+<html>
+  <head>
+    <style>
+      svg {
+        border: 1px solid #eaeaea;
+      }
+
+      .container {
+        text-align: center;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      button {
+        font-size: 28px;
+        padding: 0;
+        border: none;
+        background-color: inherit;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <svg viewbox="-640 -360 1280 720" width="1280" height="720">
+        <g id="lines"></g>
+        <g id="dots"></g>
+      </svg>
+      <br />
+      <button id="start-button" onclick="start()">▶️</button>
+      <button id="pause-button" class="hidden" onclick="stop()">⏸️</button>
+    </div>
+  </body>
+  <script>
+    const dots = document.getElementById('dots');
+    const lines = document.getElementById('lines');
+
+    const setAttributes = (element, attrs) => {
+      for (const [attr, val] of Object.entries(attrs)) {
+        element.setAttribute(attr, val);
+      }
+    };
+
+    const removeAllChildren = element => {
+      while (element.firstChild) {
+        element.removeChild(element.firstChild);
+      }
+    };
+
+    const hide = element => {
+      element.classList.add('hidden');
+    };
+
+    const show = element => {
+      element.classList.remove('hidden');
+    };
+
+    const toggleVisibility = element => {
+      element.classList.toggle('hidden');
+    };
+
+    const Coord = (x, y) => ({
+      x,
+      y,
+      add: function (other) {
+        if (typeof other === 'number') {
+          return Coord(this.x + other, this.y + other);
+        }
+        try {
+          return Coord(this.x + other.x, this.y + other.y);
+        } catch {
+          return undefined;
+        }
+      },
+      sub: function (other) {
+        if (typeof other === 'number') {
+          return Coord(this.x - other, this.y - other);
+        }
+        try {
+          return Coord(this.x - other.x, this.y - other.y);
+        } catch {
+          return undefined;
+        }
+      },
+      mul: function (other) {
+        if (typeof other === 'number') {
+          return Coord(this.x * other, this.y * other);
+        }
+        return;
+      },
+      div: function (other) {
+        if (typeof other === 'number') {
+          return Coord(this.x / other, this.y / other);
+        }
+        return;
+      },
+      norm: function () {
+        const length = this.length();
+        return Coord(this.x / length, this.y / length);
+      },
+      length: function () {
+        return Math.hypot(this.x, this.y);
+      },
+    });
+    const Point = (initial, locked) => ({
+      current: initial,
+      prev: initial,
+      locked: locked ?? false,
+    });
+    const Stick = (pointA, pointB) => ({
+      pointA,
+      pointB,
+      length: pointA.current.sub(pointB.current).length(),
+    });
+
+    const simulate = (points, sticks, dt, gravity = 0.01, iterations = 1) => {
+      const gravCoord = Coord(0, (gravity / iterations) * dt * dt);
+      for (let i = 0; i < iterations; i++) {
+        for (point of points) {
+          if (!point.locked) {
+            const prev = point.current;
+            point.current = point.current.add(
+              point.current.sub(point.prev).mul(1 - 0.01)
+            );
+            point.current = point.current.add(gravCoord);
+            point.prev = prev;
+          }
+        }
+        for (stick of sticks) {
+          const middle = stick.pointA.current.add(stick.pointB.current).div(2);
+          let direction = stick.pointB.current.sub(stick.pointA.current);
+          direction = direction.norm();
+          direction = direction.mul(stick.length / 2);
+          if (!stick.pointA.locked) {
+            stick.pointA.current = middle.sub(direction);
+          }
+          if (!stick.pointB.locked) {
+            stick.pointB.current = middle.add(direction);
+          }
+        }
+      }
+    };
+
+    const setupDraw = (points, sticks) => {
+      removeAllChildren(dots);
+      removeAllChildren(lines);
+      for (point of points) {
+        const dot = document.createElementNS(
+          'http://www.w3.org/2000/svg',
+          'circle'
+        );
+        setAttributes(dot, {
+          cx: point.current.x,
+          cy: point.current.y,
+          r: 10,
+          fill: point.locked ? 'red' : 'black',
+        });
+        dots.appendChild(dot);
+      }
+      for (stick of sticks) {
+        const line = document.createElementNS(
+          'http://www.w3.org/2000/svg',
+          'path'
+        );
+        const p1 = stick.pointA.current;
+        const p2 = stick.pointB.current;
+        setAttributes(line, {
+          stroke: 'black',
+          fill: 'none',
+          d: `M ${p1.x} ${p1.y} L ${p2.x} ${p2.y}`,
+        });
+        lines.appendChild(line);
+      }
+    };
+
+    const draw = points => {
+      for (i in points) {
+        const point = points[i];
+        setAttributes(dots.children[i], {
+          cx: '' + point.current.x,
+          cy: '' + point.current.y,
+        });
+      }
+      for (i in sticks) {
+        const p1 = sticks[i].pointA.current;
+        const p2 = sticks[i].pointB.current;
+        lines.children[i].setAttribute(
+          'd',
+          `M ${p1.x} ${p1.y} L ${p2.x} ${p2.y}`
+        );
+      }
+    };
+
+    let points = [];
+    let sticks = [];
+    let running = false;
+
+    const setup = () => {
+      const _1 = Point(Coord(-600, -300), true);
+      const _2 = Point(Coord(-500, -300));
+      const _3 = Point(Coord(-400, -300));
+      const _4 = Point(Coord(-300, -300));
+      const _5 = Point(Coord(-200, -300));
+      const _6 = Point(Coord(-100, -300));
+      const _7 = Point(Coord(0, -300), true);
+      points = [_1, _2, _3, _4, _5, _6, _7];
+      sticks = [
+        Stick(_1, _2),
+        Stick(_2, _3),
+        Stick(_3, _4),
+        Stick(_4, _5),
+        Stick(_5, _6),
+        Stick(_6, _7),
+      ];
+    };
+
+    const start = () => {
+      hide(document.getElementById('start-button'));
+      show(document.getElementById('pause-button'));
+      running = true;
+      let prev = undefined;
+      const tick = timestamp => {
+        if (!prev) prev = timestamp;
+        let dt = timestamp - prev;
+        simulate(points, sticks, dt);
+        draw(points);
+        prev = timestamp;
+
+        if (running) {
+          window.requestAnimationFrame(tick);
+        }
+      };
+      window.requestAnimationFrame(tick);
+    };
+
+    const stop = () => {
+      running = false;
+      show(document.getElementById('start-button'));
+      hide(document.getElementById('pause-button'));
+    };
+  </script>
+</html>

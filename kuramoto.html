@@ -1,0 +1,108 @@
+<html>
+  <svg id="svg" width="1280" height="720"></svg>
+</html>
+<script>
+  const random = (min, max) => Math.random() * (max - min) + min;
+  const oscillator = (freq, startPos) => ({
+    freq: freq ?? random(0, 6),
+    pos: startPos ?? random(0, 2 * Math.PI),
+    setDelta: function (k, others) {
+      this.delta = 0;
+      others.forEach(other => (this.delta += Math.sin(other.pos - this.pos)));
+      if (others.length > 0) this.delta *= k / others.length;
+      this.delta += this.freq;
+    },
+    updatePos: function (time) {
+      this.pos += this.delta * time;
+      this.pos %= 2 * Math.PI;
+      return this.pos;
+    },
+  });
+
+  const Point = (x, y) => ({ x, y });
+  const center = Point(1280 / 2, 720 / 2);
+  const radius = 300;
+
+  const setAttributes = (element, attrs) => {
+    for (const [attr, val] of Object.entries(attrs)) {
+      element.setAttribute(attr, val);
+    }
+  };
+  const SVGElement = (type, attrs) => {
+    let el = document.createElementNS('http://www.w3.org/2000/svg', type);
+    if (attrs) setAttributes(el, attrs);
+    return el;
+  };
+  const svg = document.getElementById('svg');
+  const dots = [];
+  let K = 2;
+
+  const dot = (freq, startAngle) => {
+    let osc = oscillator(freq, startAngle);
+    let pos = Point(
+      radius * Math.cos(osc.pos) + center.x,
+      radius * Math.sin(osc.pos) + center.y
+    );
+    let element = SVGElement('circle', {
+      cx: pos.x,
+      cy: pos.y,
+      r: 10,
+    });
+    svg.appendChild(element);
+    let obj = {
+      osc,
+      pos,
+      element,
+      setPos: function () {
+        this.pos = Point(
+          radius * Math.cos(this.osc.pos) + center.x,
+          radius * Math.sin(this.osc.pos) + center.y
+        );
+        setAttributes(this.element, {
+          cx: this.pos.x,
+          cy: this.pos.y,
+        });
+      },
+      tick: function (time) {
+        this.osc.updatePos(time);
+        this.setPos();
+      },
+    };
+    dots.push(obj);
+    return obj;
+  };
+
+  let running = false;
+  let prev;
+  function step(timestamp) {
+    prev = prev ?? timestamp;
+    delta = (timestamp - prev) / 1000;
+    let oscillators = dots.map(d => d.osc);
+    oscillators.forEach(o => o.setDelta(K, oscillators));
+    dots.forEach(d => d.tick(delta));
+    if (running) {
+      window.requestAnimationFrame(step);
+    }
+    prev = timestamp;
+  }
+  const start = () => {
+    running = true;
+    window.requestAnimationFrame(step);
+  };
+  const stop = () => {
+    running = false;
+  };
+
+  const setup = () => {
+    let circle = SVGElement('circle');
+    setAttributes(circle, {
+      cx: center.x,
+      cy: center.y,
+      r: radius,
+      fill: 'none',
+      stroke: 'black',
+    });
+    svg.appendChild(circle);
+  };
+  setup();
+</script>

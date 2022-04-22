@@ -1,0 +1,93 @@
+<html>
+    <head>
+        <style>
+            @keyframes fill {
+                0% {
+                    border-radius: 50%;
+                    width: 0;
+                    height: 0;
+                }
+                40% {
+                    border-radius: 50%;
+                    size: 100%;
+                }
+                100% {
+                    border-radius: 5%;
+                    size: 100%;
+                }
+            }
+
+            /* The element to apply the animation to */
+            .animated {
+                width: 100%;
+                height: 100%;
+                position: relative;
+                animation-name: fill;
+                animation-duration: 0.2s;
+                animation-fill-mode: forwards;
+            }
+            .success {
+                background-color: yellowgreen;
+            }
+            .fail {
+                background-color: tomato;
+            }
+
+            .box {
+                width: 100px;
+                height: 100px;
+                border-radius: 5%;
+                background-color: white;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                cursor: pointer;
+            }
+        </style>
+    </head>
+    <body style="background-color: black">
+        <div name="box" class="box" onclick="fill(this, true)"></div>
+        <div name="box" class="box" onclick="fill(this, true)"></div>
+        <div name="box" class="box" onclick="fill(this, true)"></div>
+    </body>
+</html>
+
+<script>
+    document.getElementsByName("box").forEach((box) => {
+        addRightClick(box, () => {
+            fill(box, false);
+        });
+    });
+    function fill(element, success) {
+        const animated = document.createElement("div");
+        animated.classList.add("animated");
+        if (success) {
+            animated.classList.add("success");
+        } else {
+            animated.classList.add("fail");
+        }
+        element.appendChild(animated);
+        el = document.getElementById("");
+        element.removeAttribute("onclick");
+    }
+
+    // shorthand to add a callback when right clicking on an element
+    function addRightClick(element, callback) {
+        if (element.addEventListener) {
+            element.addEventListener(
+                "contextmenu",
+                function (e) {
+                    callback(e);
+                    e.preventDefault();
+                },
+                false
+            );
+        } else {
+            // IE support, because why not?
+            element.attachEvent("oncontextmenu", function () {
+                callback();
+                window.event.returnValue = false;
+            });
+        }
+    }
+</script>

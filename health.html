@@ -1,0 +1,52 @@
+<html>
+  <svg width="1280" height="720"></svg>
+</html>
+<script>
+  const healthTime = 1000; // 1 second
+  const now = () => +(new Date());
+
+  const HealthStamp = (hp, time) => ({
+    hp, time
+  });
+  const Entity = (maxHP) => ({
+    maxHP,
+    hp: maxHP,
+    stamp: undefined,
+    heal: function(amount) {this.hp += amount},
+    attack: function(damage) {
+      if (this.stamp) {
+        this.stamp.time = now();
+      } else {
+        this.stamp = HealthStamp(this.hp, now());
+      }
+      this.hp -= damage;
+      if (this.hp < 0) {
+        this.kill();
+      }
+    },
+    tick: function(time) {
+      time = time ?? now();
+      if (this.stamp && time > this.stamp.time + healthTime) {
+        // fire off animation;
+        this.stamp = undefined;
+      }
+    },
+    kill: function() {
+      this.hp = 0;
+      this.stamp = undefined;
+      // fire off faster animation
+    }
+  });
+
+  const healths = {};
+  const step = timestamp => {
+    let continue = false;
+    for (const [id, stamps] of healths) {
+      for (const {hp, time} of stamps) {
+        if (time < timestamp - healthTime) {
+
+        }
+      }
+    }
+  };
+</script>

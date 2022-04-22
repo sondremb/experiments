@@ -1,0 +1,21 @@
+{
+	"compilerOptions": {
+		"esModuleInterop": true,
+		"moduleResolution": "node",
+		"outDir": "dist",
+		"lib": [
+			"dom",
+			"esnext"
+		],
+		// stricter type-checking for stronger correctness. Recommended by TS
+		"strict": true,
+		// linter checks for common issues
+		"noImplicitReturns": true,
+		"noFallthroughCasesInSwitch": true,
+		// noUnused* overlap with @typescript-eslint/no-unused-vars, can disable if duplicative
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"target": "es6",
+		"module": "es6"
+	}
+}

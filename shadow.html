@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+  <div style="text-align: center">
+    <svg id="svg" style="border: 1pt solid black" onClick="onClick(evt)">
+      <g id="light"></g>
+      <g id="objects">
+        <!--<circle id="source" cx="0" cy="0" r="10" fill="yellow" />-->
+        <text id="source" style="pointer-events: none">💡</text>
+      </g>
+    </svg>
+    <br />
+    <button id="startDrawButton" onClick="draw.start()">✏️</button>
+    <button id="saveDrawButton" onClick="draw.save()" style="display: none">
+      💾
+    </button>
+    <button id="cancelDrawButton" onClick="draw.cancel()" style="display: none">
+      🗑️
+    </button>
+    <br />
+    <button onClick="sweep()">💡</button>
+    <br />
+    <input
+      type="range"
+      id="angle"
+      min="-4"
+      max="4"
+      step="0.01"
+      onInput="sweep(this.value)"
+    />
+  </div>
+</html>
+<script>
+  const svg = document.getElementById('svg');
+  const objGroup = document.getElementById('objects');
+  const lightGroup = document.getElementById('light');
+  const lightElement = document.getElementById('source');
+  const startDrawButton = document.getElementById('startDrawButton');
+  const saveDrawButton = document.getElementById('saveDrawButton');
+  const cancelDrawButton = document.getElementById('cancelDrawButton');
+
+  var light;
+  const endpoints = [];
+  const globalSegments = [];
+
+  const moveLight = p => {
+    light = p;
+    setAttributes(lightElement, { x: light.x, y: light.y });
+    sweep();
+  };
+  var handleClick = moveLight;
+
+  const config = {
+    width: 1280,
+    height: 720,
+    get center() {
+      return Point(this.width / 2, this.height / 2);
+    },
+  };
+
+  const setAttributes = (element, attrs) => {
+    for (const [attr, val] of Object.entries(attrs)) {
+      element.setAttribute(attr, val);
+    }
+  };
+
+  const toggleVisibility = (element, visible) => {
+    let target = visible ?? element.style.display !== 'inline';
+    element.style.display = target ? 'inline' : 'none';
+  };
+
+  const show = element => toggleVisibility(element, true);
+  const hide = element => toggleVisibility(element, false);
+
+  Object.defineProperty(Array.prototype, 'last', {
+    get: function () {
+      return this[this.length - 1];
+    },
+  });
+
+  const Point = (x, y) => ({ x, y });
+  const EndPoint = (p, segment) => ({
+    _point: p,
+    segment,
+    angle: 0,
+    begin: false,
+    get x() {
+      return this._point.x;
+    },
+    get y() {
+      return this._point.y;
+    },
+    setAngle: function (p) {
+      this.angle = Math.atan2(this.y - p.y, this.x - p.x);
+    },
+  });
+  const compareEndpoint = (p1, p2) => {
+    if (p1.angle > p2.angle) return 1;
+    if (p1.angle < p2.angle) return -1;
+    if (!p1.begin && p2.begin) return 1;
+    if (p1.begin && !p2.begin) return -1;
+    return 0;
+  };
+  const Segment = function (p1, p2) {
+    let obj = {};
+    return Object.assign(obj, { p1: EndPoint(p1, obj), p2: EndPoint(p2, obj) });
+  };
+  const SvgObj = segments => {
+    const el = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    setAttributes(el, { stroke: 'black', fill: 'none' });
+    objGroup.appendChild(el);
+    let obj = {
+      el,
+      segments,
+      draw: function () {
+        if (this.segments) {
+          let d = `M ${this.segments[0].p1.x} ${this.segments[0].p1.y}`;
+          d += this.segments.map(s => `L ${s.p2.x} ${s.p2.y}`).join(' ');
+          this.el.setAttribute('d', d);
+        }
+      },
+      push: function (s) {
+        this.segments.push(s);
+        let d = this.el.getAttribute('d') ?? `M ${s.p1.x} ${s.p1.y}`;
+        this.el.setAttribute('d', d + ` L ${s.p2.x} ${s.p2.y}`);
+      },
+      publish: function () {
+        // TODO global? ugly.
+        this.segments.forEach(s => {
+          globalSegments.push(s);
+          endpoints.push(s.p1, s.p2);
+        });
+      },
+    };
+    if (obj.segments.length > 0) obj.draw();
+    return obj;
+  };
+  const getSegments = (points, close) => {
+    let segments = [];
+    let prev = points[0];
+    let current;
+    for (let i = 1; i < points.length; i++) {
+      current = points[i];
+      segments.push(Segment(prev, current));
+      prev = current;
+    }
+    if (close) segments.push(Segment(prev, points[0]));
+    return segments;
+  };
+
+  const draw = {
+    drawing: false,
+    prev: undefined,
+    obj: undefined,
+    draw: function (p) {
+      if (!this.drawing) return;
+      if (this.prev) {
+        this.obj.push(Segment(this.prev, p));
+      }
+      this.prev = p;
+    },
+    _flipButtons: function () {
+      toggleVisibility(startDrawButton, !this.drawing);
+      toggleVisibility(cancelDrawButton, this.drawing);
+      toggleVisibility(saveDrawButton, this.drawing);
+    },
+    start: function () {
+      this.drawing = true;
+      this._flipButtons();
+      this.obj = SvgObj([]);
+      setClickHandler('draw');
+      console.log(this);
+    },
+    _finish: function () {
+      this.drawing = false;
+      this._flipButtons();
+      this.prev = undefined;
+      this.obj = undefined;
+      setClickHandler('move');
+    },
+    cancel: function () {
+      this.obj.el.remove();
+      this._finish();
+    },
+    save: function () {
+      this.obj.publish();
+      this._finish();
+      sweep();
+    },
+  };
+
+  function setClickHandler(string) {
+    if (string === 'draw') {
+      handleClick = draw.draw.bind(draw);
+    } else if (string === 'move') {
+      handleClick = moveLight;
+    }
+  }
+
+  const updateLightPosition = () => {
+    globalSegments.forEach(s => {
+      s.p1.setAngle(light);
+      s.p2.setAngle(light);
+      let dAngle = s.p2.angle - s.p1.angle;
+      dAngle = dAngle <= -Math.PI ? dAngle + 2 * Math.PI : dAngle;
+      dAngle = dAngle > Math.PI ? dAngle - 2 * Math.PI : dAngle;
+      s.p1.begin = dAngle > 0;
+      s.p2.begin = !s.p1.begin;
+    });
+  };
+
+  const lineIntersection = (s1, s2) => {
+    // https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection#Given_two_points_on_each_line_segment
+    const x1 = s1.p1.x;
+    const y1 = s1.p1.y;
+    const x2 = s1.p2.x;
+    const y2 = s1.p2.y;
+    const x3 = s2.p1.x;
+    const y3 = s2.p1.y;
+    const x4 = s2.p2.x;
+    const y4 = s2.p2.y;
+    let t =
+      ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) /
+      ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4));
+    return Point(x1 + t * (x2 - x1), y1 + t * (y2 - y1));
+  };
+
+  const sweep = maxAngle => {
+    maxAngle = maxAngle ?? 4; // 4 > pi
+    while (lightGroup.firstChild) {
+      lightGroup.removeChild(lightGroup.firstChild);
+    }
+    updateLightPosition();
+    let walls = new Set([]);
+    let nearest, prev;
+    let shortestDist = Infinity;
+    endpoints.sort(compareEndpoint);
+    let prevCorner;
+    for (let pass = 1; pass <= 2; pass++) {
+      endpoints.forEach(e => {
+        if (e.begin) {
+          walls.add(e.segment);
+        } else {
+          walls.delete(e.segment);
+        }
+        // find out which wall is nearest
+        // rotate the ray ever so slightly to handle an edge case
+        let ray = Segment(
+          light,
+          Point(
+            light.x + Math.cos(e.angle + 0.01),
+            light.y + Math.sin(e.angle + 0.01)
+          )
+        );
+        shortestDist = Infinity;
+        walls.forEach(s => {
+          let p = lineIntersection(ray, s);
+          let squareDist =
+            (p.x - light.x) * (p.x - light.x) +
+            (p.y - light.y) * (p.y - light.y);
+          if (squareDist < shortestDist) {
+            nearest = s;
+            shortestDist = squareDist;
+          }
+        });
+        if (nearest !== prev) {
+          // use exact ray for drawing triangles
+          ray = Segment(
+            light,
+            Point(light.x + Math.cos(e.angle), light.y + Math.sin(e.angle))
+          );
+          if (pass === 2 && e.angle < maxAngle) {
+            // add triangle
+            let currentCorner = lineIntersection(prev, ray);
+            let tri = document.createElementNS(
+              'http://www.w3.org/2000/svg',
+              'polygon'
+            );
+            tri.style = 'fill: yellow; fill-opacity: 30%';
+            tri.setAttribute(
+              'points',
+              `${light.x},${light.y} ${currentCorner.x},${currentCorner.y} ${prevCorner.x},${prevCorner.y}`
+            );
+            lightGroup.appendChild(tri);
+          }
+          prevCorner = lineIntersection(nearest, ray);
+        }
+        prev = nearest;
+      });
+    }
+  };
+
+  // get svg coords from onclick event
+  // https://stackoverflow.com/a/42711775
+  var pt = svg.createSVGPoint(); // Created once for document
+  function onClick(evt) {
+    pt.x = evt.clientX;
+    pt.y = evt.clientY;
+
+    // The cursor point, translated into svg coordinates
+    let { x, y } = pt.matrixTransform(svg.getScreenCTM().inverse());
+    handleClick(Point(x, y));
+  }
+
+  const margin = 10;
+  const onLoad = () => {
+    setAttributes(svg, { width: config.width, height: config.height });
+    let p1 = Point(margin, margin);
+    let p2 = Point(config.width - margin, margin);
+    let p3 = Point(config.width - margin, config.height - margin);
+    let p4 = Point(margin, config.height - margin);
+    const border = SvgObj(getSegments([p1, p2, p3, p4], true));
+    border.publish();
+    moveLight(config.center);
+  };
+  onLoad();
+</script>

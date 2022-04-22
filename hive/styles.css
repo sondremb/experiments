@@ -1,0 +1,14 @@
+svg {
+	border: 1px solid black;
+}
+
+.hex {
+	stroke-dasharray: 60;
+	animation: appear 1s 1 ease-in;
+}
+
+@keyframes appear {
+	from {
+		stroke-dashoffset: 60;
+	}
+}

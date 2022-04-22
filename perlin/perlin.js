@@ -34,39 +34,58 @@ const P = [
     138, 236, 205, 93, 222, 114, 67, 29, 24, 72, 243, 141, 128, 195, 78, 66, 215,
     61, 156, 180,
 ];
-export function octavePerlin(x, y, octaves, persistance) {
+export function octavePerlin(x, y, octaves, persistance, repeat) {
     let total = 0;
     let frequency = 1;
     let amplitude = 1;
     let maxValue = 0;
     for (let i = 0; i < octaves; i++) {
-        total += perlin2d(x * frequency, y * frequency) * amplitude;
+        total += perlin2d(x * frequency, y * frequency, repeat) * amplitude;
         maxValue += amplitude;
         amplitude *= persistance;
         frequency *= 2;
     }
     return total / maxValue;
 }
-export function OctavePerlinGenerator(octaves, persistance) {
-    return (x, y) => octavePerlin(x, y, octaves, persistance);
+export function OctavePerlinGenerator(octaves, persistance, repeat) {
+    return (x, y) => octavePerlin(x, y, octaves, persistance, repeat);
 }
-export function perlin2d(x, y) {
+const mod = (num, mod) => ((num % mod) + mod) % mod;
+export function perlin2d(x, y, repeat) {
+    if (repeat !== undefined) {
+        x = mod(x, repeat);
+        y = mod(y, repeat);
+    }
     // finner nærmeste heltall under x og y
     const xi = Math.floor(x);
     const yi = Math.floor(y);
     // finer x % 1 og y % 1
     const xf = x - xi;
     const yf = y - yi;
+    const inc = (num) => {
+        return repeat === undefined ? num + 1 : mod(num + 1, repeat);
+    };
     // hash-verdier, basert på permutasjonstabellen
     const aa = P[xi + P[yi]];
-    const ab = P[xi + P[yi + 1]];
-    const ba = P[xi + 1 + P[yi]];
-    const bb = P[xi + 1 + P[yi + 1]];
+    const ab = P[xi + P[inc(yi)]];
+    const ba = P[inc(xi) + P[yi]];
+    const bb = P[inc(xi) + P[inc(yi)]];
+    // hentet fra https://stackoverflow.com/a/17351156
+    // tar imot en hashverdig og to tall x og y
+    // basert på hash-verdien, velg en vektor fra følgende:
+    // [-1, -1], [-1, 1], [1, -1] og [1, 1]
+    // returner prikkproduktet (a.x * b.x + a.y * b.y) mellom den valgte vektoren og [x, y]
+    const grad = (hash, x, y) => {
+        return (hash & 1 ? x : -x) + (hash & 2 ? y : -y);
+    };
     // finner prikkproduktet mellom tilfeldig vektor og distansevektor for alle fire hjørner
     const x0y0 = grad(aa, xf, yf);
     const x0y1 = grad(ab, xf, yf - 1);
     const x1y0 = grad(ba, xf - 1, yf);
     const x1y1 = grad(bb, xf - 1, yf - 1);
+    // smoothing-funksjon, også fra Ken Perlin
+    // tilsvarer 6t^5 - 15t^4 + 10t^3
+    const fade = (t) => t * t * t * (10 + t * (6 * t - 15));
     // smoother xf og yf til bruk som interpoleringsfaktor
     const u = fade(xf);
     const v = fade(yf);
@@ -77,17 +96,6 @@ export function perlin2d(x, y) {
     // verdi er nå i domene [-1, -1], normaliser til [0, 1]
     return (val + 1) / 2;
 }
-// hentet fra https://stackoverflow.com/a/17351156
-// tar imot en hashverdig og to tall x og y
-// basert på hash-verdien, velg en vektor fra følgende:
-// [-1, -1], [-1, 1], [1, -1] og [1, 1]
-// returner prikkproduktet (a.x * b.x + a.y * b.y) mellom den valgte vektoren og [x, y]
-const grad = (hash, x, y) => {
-    return (hash & 1 ? x : -x) + (hash & 2 ? y : -y);
-};
-// smoothing-funksjon, også fra Ken Perlin
-// tilsvarer 6t^5 - 15t^4 + 10t^3
-const fade = (t) => t * t * t * (10 + t * (6 * t - 15));
 const lerp = (a, b, t) => {
     return a + t * (b - a);
 };

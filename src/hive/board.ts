@@ -59,7 +59,7 @@ class Board {
 		return this._board[q]?.[r];
 	}
 }
-const board = new Board();
+export const board = new Board();
 
 interface Piece {
 	id: number;
@@ -68,7 +68,7 @@ interface Piece {
 	hex: Hex;
 }
 
-function canLeave(piece: Piece): boolean {
+export function canLeave(piece: Piece): boolean {
 	const hex = piece.hex;
 	if (hex.pieces.length > 1 && hex.pieces[0].id === piece.id) return true;
 	// find first neighbor
@@ -77,7 +77,7 @@ function canLeave(piece: Piece): boolean {
 	return true;
 }
 
-function canSlide(from: Coord, to: Coord): boolean {
+export function canSlide(from: Coord, to: Coord): boolean {
 	const dir = to.sub(from);
 	const cwDir = dir.rotateCW();
 	const ccwDir = dir.rotateCCW();

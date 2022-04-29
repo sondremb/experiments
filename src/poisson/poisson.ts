@@ -38,7 +38,15 @@ const NEIGHBORS = [
 	[2, 1],
 ];
 
-export function poissonSamples(minX, maxX, minY, maxY, r, maxNumSamples, k) {
+export function poissonSamples(
+	minX: number,
+	maxX: number,
+	minY: number,
+	maxY: number,
+	r: number,
+	maxNumSamples: number,
+	k: number
+) {
 	const width = maxX - minX;
 	const height = maxY - minY;
 	const d = r / Math.sqrt(2);

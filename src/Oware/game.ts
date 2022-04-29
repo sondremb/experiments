@@ -75,7 +75,7 @@ const nextState = (state: GameState, move: Move): GameState => {
 	};
 };
 
-const getLegalMoves = (state: GameState): Move[] => {
+export const getLegalMoves = (state: GameState): Move[] => {
 	const moves = cellsForPlayer(state.player).map((move) => ({
 		move,
 		legality: isLegalMove(state, move),

@@ -85,4 +85,4 @@ function animateViewbox() {
 	window.requestAnimationFrame(step);
 }
 
-let hex = addHex(new Coord(0, 0));
+//let hex = addHex(new Coord(0, 0));

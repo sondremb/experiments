@@ -85,6 +85,9 @@ export function lerp(t: number, from: Vector2 | number, to: Vector2 | number) {
 	} else if (typeof from === "object" && typeof to === "object") {
 		return new Vector2(lerp(t, from.x, to.x), lerp(t, from.y, to.y));
 	}
+	throw Error(
+		`Unabled to lerp between values of type ${typeof from} and ${typeof to}`
+	);
 }
 
 export function mod(num: number, modulus: number) {

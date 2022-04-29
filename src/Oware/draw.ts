@@ -1,13 +1,14 @@
 import { removeAllChildren } from "../dom-utils";
 import { GameState } from "./game";
 
-function setup(initialState: GameState) {
+export function setup(initialState: GameState) {
 	const svg = document.getElementById("svg");
 	assertIsDefined(svg, 'Fant ingen element med ID "svg"!');
 	removeAllChildren(svg);
+	console.log(initialState);
 }
 
-function assertIsDefined<T>(
+export function assertIsDefined<T>(
 	value: T,
 	errorMessage: string
 ): asserts value is NonNullable<T> {
@@ -16,7 +17,10 @@ function assertIsDefined<T>(
 	}
 }
 
-function valueOrError<T>(value: T, errorMessage: string): NonNullable<T> {
+export function valueOrError<T>(
+	value: T,
+	errorMessage: string
+): NonNullable<T> {
 	assertIsDefined(value, errorMessage);
 	return value;
 }

@@ -1,0 +1,19 @@
+{
+  "name": "experiments",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "description": "A collection of various experiments, mostly in HTML and Typescript",
+  "main": "index.html",
+  "repository": "git@github.com:sondremb/experiments.git",
+  "author": "sondremb <sondremartin@hotmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^4.6.4",
+    "vite": "^2.9.6"
+  }
+}

@@ -12,11 +12,11 @@ function main() {
 	if (ctx === null) return;
 	const centerX = canvas.width / 2;
 	const centerY = canvas.height / 2;
-	const radius = 250;
+	const radius = 200;
 	const stepSize = 0.01;
 	const frequency = 25 / (2 * Math.PI);
 	const circumference = 2 * Math.PI * frequency;
-	const amplitude = 200;
+	const amplitude = 150;
 	const timeFrequency = 0.001;
 	const noise = OctavePerlinGenerator(2, 0.5, circumference);
 

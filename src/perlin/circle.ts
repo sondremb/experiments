@@ -14,10 +14,10 @@ function main() {
 	const centerY = canvas.height / 2;
 	const radius = 200;
 	const stepSize = 0.01;
-	const frequency = 25 / (2 * Math.PI);
+	const frequency = 10 / (2 * Math.PI);
 	const circumference = 2 * Math.PI * frequency;
 	const amplitude = 150;
-	const timeFrequency = 0.001;
+	const timeFrequency = 0.0005;
 	const noise = OctavePerlinGenerator(2, 0.5, circumference);
 
 	const draw = (timestamp: number) => {
@@ -26,7 +26,11 @@ function main() {
 		for (let angle = 0; angle <= 2 * Math.PI; angle += stepSize) {
 			let dist =
 				radius +
-				amplitude * noise(angle * frequency, timestamp * timeFrequency);
+				amplitude *
+					noise(
+						angle * frequency + timestamp * timeFrequency,
+						timestamp * timeFrequency
+					);
 			ctx.lineTo(
 				centerX + dist * Math.cos(angle),
 				centerY + dist * Math.sin(angle)

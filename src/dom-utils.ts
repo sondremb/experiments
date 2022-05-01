@@ -18,10 +18,12 @@ export function setAttributes(
 
 export function createElement(
 	tag: TagName,
-	attributes?: AttributeMap
+	attributes?: AttributeMap,
+	innerHtml?: string
 ): HTMLElement {
 	const element = document.createElement(tag);
 	if (attributes) setAttributes(element, attributes);
+	if (innerHtml) element.innerHTML = innerHtml;
 	return element;
 }
 

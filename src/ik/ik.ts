@@ -5,21 +5,26 @@ export class Bone {
 	length: number;
 	angle: number;
 	child: Bone | null;
+	baseRotation: number;
 
 	constructor(base: Vector2, length: number, angle?: number) {
 		this.base = base;
 		this.length = length;
 		this.angle = mod(angle ?? 0, Math.PI * 2);
 		this.child = null;
+		this.baseRotation = 0;
 	}
 
 	addChild(length: number, angle?: number): Bone {
 		this.child = new Bone(this.end, length, angle);
+		this.child.baseRotation = this.baseRotation + this.angle;
 		return this.child;
 	}
 
 	get end(): Vector2 {
-		return this.base.add(Vector2.fromAngle(this.angle).mul(this.length));
+		return this.base.add(
+			Vector2.fromAngle(this.baseRotation + this.angle).mul(this.length)
+		);
 	}
 
 	pointTo(target: Vector2): Vector2 {
@@ -45,6 +50,9 @@ export class Bone {
 
 	setRotation(angle: number): void {
 		this.angle = angle;
-		this.child?.moveTo(this.end);
+		if (this.child) {
+			this.child.baseRotation = this.baseRotation + this.angle;
+			this.child?.moveTo(this.end);
+		}
 	}
 }

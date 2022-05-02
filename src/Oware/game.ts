@@ -1,4 +1,4 @@
-enum Player {
+export enum Player {
 	One = 1,
 	Two = 2,
 }
@@ -46,7 +46,7 @@ const isLegalMove = (state: GameState, move: Move): Legality => {
 	return Legality.Yes;
 };
 
-const nextState = (state: GameState, move: Move): GameState => {
+export const nextState = (state: GameState, move: Move): GameState => {
 	const { player } = state;
 	const opponent = otherPlayer(player);
 	const newBoard = [...state.board];

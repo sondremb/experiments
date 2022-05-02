@@ -1,4 +1,5 @@
 type TagName = keyof HTMLElementTagNameMap;
+
 type AttributeMap = Record<string, string>;
 
 export function removeAllChildren(element: HTMLElement): void {
@@ -8,7 +9,7 @@ export function removeAllChildren(element: HTMLElement): void {
 }
 
 export function setAttributes(
-	element: HTMLElement,
+	element: HTMLElement | SVGElement,
 	attributes: AttributeMap
 ): void {
 	for (const [attribute, value] of Object.entries(attributes)) {
@@ -24,6 +25,15 @@ export function createElement(
 	const element = document.createElement(tag);
 	if (attributes) setAttributes(element, attributes);
 	if (innerHtml) element.innerHTML = innerHtml;
+	return element;
+}
+
+export function createSvgElement(
+	tag: string,
+	attributes?: AttributeMap
+): SVGElement {
+	const element = document.createElementNS("http://www.w3.org/2000/svg", tag);
+	if (attributes) setAttributes(element, attributes);
 	return element;
 }
 

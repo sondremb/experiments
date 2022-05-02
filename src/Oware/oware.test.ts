@@ -111,3 +111,21 @@ test("... unless that is not possible", () => {
 	expect(legalMoves).toContain(5);
 	expect(legalMoves).toContain(4);
 });
+
+test("Does not self-capture", () => {
+	// arrange
+	const state: GameState = {
+		board: [1, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0],
+		points: {
+			[Player.One]: 0,
+			[Player.Two]: 0,
+		},
+		player: Player.One,
+	};
+	// act
+	const newState = nextState(state, 5);
+	// assert
+	expect(newState.board[0]).toBe(2);
+	expect(newState.points[Player.One]).toBe(0);
+	expect(newState.points[Player.Two]).toBe(0);
+});

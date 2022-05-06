@@ -54,9 +54,23 @@ export class PreviewArrow {
 				new Vector2(0, target < 6 ? visits.bottom : -visits.top).mul(off2)
 			)
 		);
+		let length = 0;
+		for (let i = 0; i < queue.length - 1; i++) {
+			length += queue[i].distance(queue[i + 1]);
+		}
 		this.element.setAttribute(
 			"d",
 			`M ${queue.map((vec) => `${vec.x} ${vec.y}`).join(" L ")}`
+		);
+		this.element.style.strokeDasharray = String(length);
+		this.element.animate(
+			[{ strokeDashoffset: String(length) }, { strokeDashoffset: 0 }],
+			{
+				duration: Math.sqrt(length) * 10,
+				fill: "forwards",
+				iterations: 1,
+				easing: "ease",
+			}
 		);
 	}
 

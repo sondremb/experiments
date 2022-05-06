@@ -2,6 +2,7 @@ import { createSvgElement } from "../dom-utils";
 import { Vector2 } from "../math";
 import { Cell } from "./cell";
 import { GameState, getLegalMoves, Move, nextState, Player } from "./game";
+import { PreviewArrow } from "./preview-arrow";
 
 export class Manager {
 	size: Vector2;
@@ -9,6 +10,7 @@ export class Manager {
 	previewState: GameState | null;
 	cells: Cell[];
 	svg: SVGSVGElement;
+	arrow: PreviewArrow;
 	gap: number = 30;
 	radius: number = 80;
 
@@ -17,7 +19,7 @@ export class Manager {
 		//this.state = initialState;
 		this.state = {
 			player: Player.One,
-			board: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+			board: [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 47],
 			points: {
 				[Player.One]: 0,
 				[Player.Two]: 0,
@@ -26,6 +28,7 @@ export class Manager {
 		this.previewState = null;
 		this.svg = this.createSvg();
 		this.cells = this.createCells();
+		this.arrow = this.createPreviewArrow();
 	}
 
 	getLegalMoves() {
@@ -40,6 +43,7 @@ export class Manager {
 	previewMove(move: Move) {
 		this.previewState = nextState(this.state, move);
 		this.cells.forEach((cell) => cell.updatePreview());
+		this.arrow.previewMove(move);
 	}
 
 	doMove(move: Move) {
@@ -66,5 +70,11 @@ export class Manager {
 			cells.push(cell);
 		}
 		return cells;
+	}
+
+	private createPreviewArrow(): PreviewArrow {
+		const arrow = new PreviewArrow(this);
+		this.svg.appendChild(arrow.element);
+		return arrow;
 	}
 }

@@ -76,7 +76,7 @@ export class Cell {
 
 	private createCircle(): SVGCircleElement {
 		const element = createSvgElement("circle", {
-			r: "50",
+			r: String(this.manager.radius),
 			cx: String(this.position.x),
 			cy: String(this.position.y),
 			stroke: "black",

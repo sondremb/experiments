@@ -85,3 +85,30 @@ export const getLegalMoves = (state: GameState): Move[] => {
 	}
 	return moves.filter((m) => m.legality === Legality.Maybe).map((m) => m.move);
 };
+
+export enum Winner {
+	None,
+	Draw,
+}
+
+export const getWinner = (state: GameState): Player | Winner => {
+	const p1Points = state.points[Player.One];
+	const p2Points = state.points[Player.Two];
+	if (p1Points > 24 && p2Points > 24) {
+		if (p1Points > p2Points) return Player.One;
+		if (p1Points < p2Points) return Player.Two;
+		return Winner.Draw;
+	}
+	if (p1Points === 24 && p2Points === 24) return Winner.Draw;
+	if (getLegalMoves(state).length === 0) return otherPlayer(state.player);
+	return Winner.None;
+};
+
+export const isValidState = (state: GameState): boolean => {
+	return (
+		state.points[Player.One] +
+			state.points[Player.Two] +
+			state.board.reduce((prev, curr) => prev + curr, 0) ===
+		48
+	);
+};

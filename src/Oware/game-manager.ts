@@ -15,8 +15,8 @@ export class Manager {
 	previewState: GameState | null;
 	cells: Cell[];
 	svg: SVGSVGElement;
-	gap: number = 50;
-	radius: number = 50;
+	gap: number = 30;
+	radius: number = 80;
 
 	constructor(width: number, height: number) {
 		this.size = new Vector2(width, height);
@@ -52,8 +52,6 @@ export class Manager {
 	private createSvg(): SVGSVGElement {
 		return createSvgElement("svg", {
 			viewBox: `0 0 ${this.size.x} ${this.size.y}`,
-			width: "800",
-			height: "800",
 			class: "border",
 		}) as SVGSVGElement;
 	}

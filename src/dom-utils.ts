@@ -41,7 +41,8 @@ export function createChild(
 	parent: HTMLElement,
 	tag: TagName,
 	attributes?: AttributeMap
-): void {
+): HTMLElement {
 	const element = createElement(tag, attributes);
 	parent.appendChild(element);
+	return element;
 }

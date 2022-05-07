@@ -1,5 +1,6 @@
 import { createSvgElement, setAttributes } from "../dom-utils";
 import { Vector2 } from "../math";
+import { SetPreviewStateEvent, SetStateEvent } from "./events";
 import { Move } from "./game";
 import { Manager } from "./game-manager";
 
@@ -21,7 +22,11 @@ export class Cell {
 		this.circle = this.createCircle();
 		this.text = this.createText();
 		this.seedGroup = this.createSeeds();
-		this.updateState();
+
+		this.manager.queue.subscribe(SetStateEvent, () => this.updateState());
+		this.manager.queue.subscribe(SetPreviewStateEvent, () =>
+			this.updatePreview()
+		);
 	}
 
 	updateState() {

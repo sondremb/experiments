@@ -1,8 +1,24 @@
 import { createSvgElement } from "../dom-utils";
 import { Vector2 } from "../math";
 import { Cell } from "./cell";
-import { GameState, getLegalMoves, Move, nextState, Player } from "./game";
+import { EventQueue } from "./event-queue";
+import {
+	DoMoveEvent,
+	PreviewMoveEvent,
+	ResetPreviewMoveEvent,
+	SetPreviewStateEvent,
+	SetStateEvent,
+} from "./events";
+import {
+	GameState,
+	getLegalMoves,
+	initialState,
+	Move,
+	nextState,
+	Player,
+} from "./game";
 import { PreviewArrow } from "./preview-arrow";
+import { ScoreLabel } from "./score-label";
 
 export class Manager {
 	size: Vector2;
@@ -10,25 +26,29 @@ export class Manager {
 	previewState: GameState | null;
 	cells: Cell[];
 	svg: SVGSVGElement;
-	arrow: PreviewArrow;
 	gap: number = 30;
 	radius: number = 80;
+	queue: EventQueue;
 
 	constructor(width: number, height: number) {
+		this.queue = new EventQueue();
 		this.size = new Vector2(width, height);
-		//this.state = initialState;
-		this.state = {
+		this.state = initialState;
+		/* 		this.state = {
 			player: Player.One,
 			board: [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 47],
 			points: {
 				[Player.One]: 0,
 				[Player.Two]: 0,
 			},
-		};
+		}; */
 		this.previewState = null;
 		this.svg = this.createSvg();
 		this.cells = this.createCells();
-		this.arrow = this.createPreviewArrow();
+		this.createPreviewArrow();
+		this.createScoreLabels();
+
+		this.queue.publish(SetStateEvent.with(this.state));
 	}
 
 	getLegalMoves() {
@@ -37,18 +57,19 @@ export class Manager {
 
 	resetPreview() {
 		this.previewState = null;
-		this.cells.forEach((cell) => cell.updatePreview());
+		this.queue.publish(ResetPreviewMoveEvent.without());
 	}
 
 	previewMove(move: Move) {
+		this.queue.publish(PreviewMoveEvent.with(move));
 		this.previewState = nextState(this.state, move);
-		this.cells.forEach((cell) => cell.updatePreview());
-		this.arrow.previewMove(move);
+		this.queue.publish(SetPreviewStateEvent.with(this.previewState));
 	}
 
 	doMove(move: Move) {
+		this.queue.publish(DoMoveEvent.with(move));
 		this.state = nextState(this.state, move);
-		this.cells.forEach((cell) => cell.updateState());
+		this.queue.publish(SetStateEvent.with(this.state));
 	}
 
 	get center(): Vector2 {
@@ -72,9 +93,15 @@ export class Manager {
 		return cells;
 	}
 
-	private createPreviewArrow(): PreviewArrow {
+	private createPreviewArrow() {
 		const arrow = new PreviewArrow(this);
 		this.svg.appendChild(arrow.element);
-		return arrow;
+	}
+
+	private createScoreLabels(): void {
+		for (const player of [Player.One, Player.Two]) {
+			const label = new ScoreLabel(this, player);
+			this.svg.appendChild(label.element);
+		}
 	}
 }

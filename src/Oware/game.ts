@@ -3,7 +3,7 @@ export enum Player {
 	Two = 2,
 }
 
-const otherPlayer = (player: Player): Player =>
+export const otherPlayer = (player: Player): Player =>
 	player === Player.One ? Player.Two : Player.One;
 
 const cellBelongsToPlayer = (player: Player, move: Move): boolean =>

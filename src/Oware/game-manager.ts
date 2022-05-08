@@ -17,6 +17,7 @@ import {
 	nextState,
 	Player,
 } from "./game";
+import { negamax } from "./minimax";
 import { PreviewArrow } from "./preview-arrow";
 import { ScoreLabel } from "./score-label";
 
@@ -48,7 +49,29 @@ export class Manager {
 		this.createPreviewArrow();
 		this.createScoreLabels();
 
+		this.queue.subscribe(SetStateEvent, () => this.aiMove());
+
 		this.queue.publish(SetStateEvent.with(this.state));
+	}
+
+	aiMove() {
+		if (this.state.player === Player.One) return;
+		const legalMoves = this.getLegalMoves();
+		let bestMove = null;
+		let bestValue = -Infinity;
+		for (const move of legalMoves) {
+			const value = negamax(
+				nextState(this.state, move),
+				10,
+				-Infinity,
+				Infinity
+			);
+			if (value > bestValue) {
+				bestValue = value;
+				bestMove = move;
+			}
+		}
+		if (bestMove !== null) this.doMove(bestMove);
 	}
 
 	getLegalMoves() {

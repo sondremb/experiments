@@ -1,6 +1,6 @@
 import { createSvgElement } from "../dom-utils";
 import { Vector2 } from "../math";
-import { PreviewMoveEvent } from "./events";
+import { PreviewMoveEvent, ResetPreviewMoveEvent } from "./events";
 import { Move } from "./game";
 import { Manager } from "./game-manager";
 
@@ -13,6 +13,9 @@ export class PreviewArrow {
 		this.element = this.createPath();
 		this.manager.queue.subscribe(PreviewMoveEvent, (move) =>
 			this.previewMove(move)
+		);
+		this.manager.queue.subscribe(ResetPreviewMoveEvent, () =>
+			this.element.setAttribute("d", "")
 		);
 	}
 

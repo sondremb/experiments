@@ -49,7 +49,9 @@ export class Manager {
 		this.createPreviewArrow();
 		this.createScoreLabels();
 
-		this.queue.subscribe(SetStateEvent, () => this.aiMove());
+		this.queue.subscribe(SetStateEvent, () =>
+			setTimeout(() => this.aiMove(), 1000)
+		);
 
 		this.queue.publish(SetStateEvent.with(this.state));
 	}
@@ -57,7 +59,7 @@ export class Manager {
 	aiMove() {
 		if (this.state.player === Player.One) return;
 		const legalMoves = this.getLegalMoves();
-		let bestMove = null;
+		let bestMove: Move | null = null;
 		let bestValue = -Infinity;
 		for (const move of legalMoves) {
 			const value = negamax(
@@ -71,7 +73,10 @@ export class Manager {
 				bestMove = move;
 			}
 		}
-		if (bestMove !== null) this.doMove(bestMove);
+		if (bestMove !== null) {
+			this.previewMove(bestMove);
+			setTimeout(() => this.doMove(bestMove as Move), 500);
+		}
 	}
 
 	getLegalMoves() {
@@ -90,6 +95,7 @@ export class Manager {
 	}
 
 	doMove(move: Move) {
+		this.resetPreview();
 		this.queue.publish(DoMoveEvent.with(move));
 		this.state = nextState(this.state, move);
 		this.queue.publish(SetStateEvent.with(this.state));

@@ -1,10 +1,9 @@
 import { createChild } from "../dom-utils";
+import { AppFunction } from "../main";
 import { Manager } from "./game-manager";
 
-export function setup() {
-	const container = document.getElementById("app");
-	assertIsDefined(container, "Hovedddiv #app ikke definert i dokument");
-	const div = createChild(container, "div", {
+export const oware: AppFunction = (mainDiv) => {
+	const div = createChild(mainDiv, "div", {
 		class: "flex justify-center",
 	});
 	const div2 = createChild(div, "div", {
@@ -12,7 +11,7 @@ export function setup() {
 	});
 	const manager = new Manager(1280, 720);
 	div2.appendChild(manager.svg);
-}
+};
 
 export function assertIsDefined<T>(
 	value: T,
@@ -30,5 +29,3 @@ export function valueOrError<T>(
 	assertIsDefined(value, errorMessage);
 	return value;
 }
-
-setup();

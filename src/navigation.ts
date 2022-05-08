@@ -1,25 +1,23 @@
 import { createElement } from "./dom-utils";
 
-console.table(window.location.pathname);
+export type NavigationCallback = (pathname: string) => void;
+export class LinkFactory {
+	callback: NavigationCallback;
+	constructor(callback: NavigationCallback) {
+		this.callback = callback;
+	}
 
-export {};
+	createLink(url: string, text: string) {
+		const element = createElement("a", { href: url }, text);
+		element.onclick = (e: MouseEvent) => {
+			e.preventDefault();
+			window.history.pushState({}, "", url);
+			this.onNavigation();
+		};
+		return element;
+	}
 
-const realLink = createElement("a", { href: "/real" }, "Real");
-const fakeLink = createElement("a", { href: "/fake" }, "Fake");
-fakeLink.onclick = navigateTo("/fake");
-
-const div = document.getElementById("app");
-div?.appendChild(realLink);
-div?.appendChild(fakeLink);
-
-const onUrlChanged = () => {
-	console.log(window.location.pathname);
-};
-
-export function navigateTo(url: string) {
-	return (e: MouseEvent) => {
-		e.preventDefault();
-		window.history.pushState({}, "", url);
-		onUrlChanged();
-	};
+	onNavigation() {
+		this.callback(window.location.pathname);
+	}
 }

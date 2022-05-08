@@ -36,7 +36,7 @@ export class Cell {
 			};
 			this.circle.onclick = () => this.manager.doMove(this.move);
 			this.circle.classList.add(
-				"hover:fill-emerald-300",
+				"hover:fill-slate-200",
 				"cursor-pointer",
 				"active:scale-110"
 			);
@@ -44,7 +44,7 @@ export class Cell {
 			this.circle.onmouseenter = null;
 			this.circle.onclick = null;
 			this.circle.classList.remove(
-				"hover:fill-emerald-300",
+				"hover:fill-slate-200",
 				"cursor-pointer",
 				"active:scale-110"
 			);
@@ -136,12 +136,9 @@ export class Cell {
 			const seed: SVGCircleElement = this.seedGroup.children.item(
 				i
 			) as SVGCircleElement;
-			const position = this.position.add(
-				this.getSeedOffsetPosition(this.seedCount, i)
-			);
+			const offset = this.getSeedOffsetPosition(this.seedCount, i);
 			setAttributes(seed, {
-				cx: String(position.x),
-				cy: String(position.y),
+				transform: `translate(${offset.x}, ${offset.y})`,
 			});
 		}
 	}
@@ -150,6 +147,9 @@ export class Cell {
 		return createSvgElement("circle", {
 			r: String(this.manager.radius / 4),
 			fill: "black",
+			cx: String(this.position.x),
+			cy: String(this.position.y),
+			class: "transition-transform",
 		}) as SVGCircleElement;
 	}
 

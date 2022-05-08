@@ -1,6 +1,10 @@
 import { createSvgElement } from "../dom-utils";
 import { Vector2 } from "../math";
-import { SetPreviewStateEvent, SetStateEvent } from "./events";
+import {
+	ResetPreviewMoveEvent,
+	SetPreviewStateEvent,
+	SetStateEvent,
+} from "./events";
 import { Player } from "./game";
 import { Manager } from "./game-manager";
 
@@ -22,6 +26,9 @@ export class ScoreLabel {
 
 		this.manager.queue.subscribe(SetStateEvent, () => this.updateState());
 		this.manager.queue.subscribe(SetPreviewStateEvent, () =>
+			this.updateState()
+		);
+		this.manager.queue.subscribe(ResetPreviewMoveEvent, () =>
 			this.updateState()
 		);
 	}

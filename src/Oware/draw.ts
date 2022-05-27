@@ -3,6 +3,7 @@ import { AppFunction } from "../main";
 import { Manager } from "./game-manager";
 
 export const oware: AppFunction = (mainDiv) => {
+	document.title = "Oware";
 	const div = createChild(mainDiv, "div", {
 		class: "flex justify-center",
 	});

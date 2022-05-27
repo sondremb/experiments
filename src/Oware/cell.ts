@@ -1,6 +1,10 @@
 import { createSvgElement, setAttributes } from "../dom-utils";
 import { Vector2 } from "../math";
-import { SetPreviewStateEvent, SetStateEvent } from "./events";
+import {
+	ResetPreviewMoveEvent,
+	SetPreviewStateEvent,
+	SetStateEvent,
+} from "./events";
 import { Move } from "./game";
 import { Manager } from "./game-manager";
 
@@ -20,13 +24,14 @@ export class Cell {
 		this.position = this.getPosition();
 		this.group = this.createGroup();
 		this.circle = this.createCircle();
-		this.text = this.createText();
 		this.seedGroup = this.createSeeds();
+		this.text = this.createText();
 
 		this.manager.queue.subscribe(SetStateEvent, () => this.updateState());
-		this.manager.queue.subscribe(SetPreviewStateEvent, () =>
-			this.updatePreview()
+		this.manager.queue.subscribe(ResetPreviewMoveEvent, () =>
+			this.updateText()
 		);
+		this.manager.queue.subscribe(SetPreviewStateEvent, () => this.updateText());
 	}
 
 	updateState() {
@@ -50,18 +55,22 @@ export class Cell {
 			);
 		}
 		this.updateSeeds();
-		this.text.innerHTML = String(this.manager.state.board[this.move]);
+		this.updateText();
 	}
 
-	updatePreview() {
+	updateText() {
+		let text = "";
 		if (
 			this.manager.previewState === null ||
 			this.previewValue === this.stateValue
 		) {
-			this.text.innerHTML = String(this.stateValue);
+			if (this.stateValue > 0) {
+				text = String(this.stateValue);
+			}
 		} else {
-			this.text.innerHTML = `${this.stateValue} ⟶  ${this.previewValue}`;
+			text = `${this.stateValue} ⟶  ${this.previewValue}`;
 		}
+		this.text.innerHTML = text;
 	}
 
 	get stateValue(): number {
@@ -111,9 +120,12 @@ export class Cell {
 			x: String(this.position.x),
 			y: String(this.position.y),
 			"text-anchor": "middle",
-			stroke: "black",
+			"stroke-width": "1.5",
+			class:
+				"pointer-events-none text-3xl translate-y-1/4 font-bold fill-white stroke-black",
 		}) as SVGTextElement;
 		element.innerHTML = String(this.manager.state.board[this.move]);
+		this.group.appendChild(element);
 		return element;
 	}
 

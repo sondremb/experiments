@@ -85,7 +85,7 @@ export class Manager {
 
 	resetPreview() {
 		this.previewState = null;
-		this.queue.publish(ResetPreviewMoveEvent.without());
+		this.queue.publish(ResetPreviewMoveEvent);
 	}
 
 	previewMove(move: Move) {

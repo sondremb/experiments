@@ -5,35 +5,45 @@ export class EventQueue {
 		this.subscribers = {};
 	}
 
-	subscribe<T>(event: EventConstructor<T>, callback: (value: T) => void) {
+	subscribe<T>(event: EventBuilder<T>, callback: (value: T) => void) {
 		if (!(event.kind in this.subscribers)) {
 			this.subscribers[event.kind] = [];
 		}
 		this.subscribers[event.kind].push(callback);
 	}
 
-	publish<T>(event: Event<T>) {
+	publish<T>(event: Event<T>): void;
+	publish<T>(event: EventBuilder<T>): void;
+	publish<T>(event: Event<T> | EventBuilder<T>): void {
 		if (event.kind in this.subscribers) {
-			this.subscribers[event.kind].forEach((f) => f(event.value));
+			this.subscribers[event.kind].forEach((f) => {
+				if (isEvent(event)) {
+					f(event.value);
+				} else {
+					f();
+				}
+			});
 		}
 	}
 }
 
-interface EventConstructor<T> {
+function isEvent<T>(event: Event<T> | EventBuilder<T>): event is Event<T> {
+	return (event as Event<T>).value !== undefined;
+}
+
+interface EventBuilder<T> {
 	kind: string;
 	with: (value: T) => Event<T>;
-	without: () => Event<never>;
 }
 
 interface Event<T> {
 	kind: string;
-	value?: T;
+	value: T;
 }
 
-export function createEvent<T>(kind: string): EventConstructor<T> {
+export function createEvent<T>(kind: string): EventBuilder<T> {
 	return {
 		kind,
 		with: (value: T) => ({ kind, value }),
-		without: () => ({ kind }),
 	};
 }

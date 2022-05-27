@@ -17,7 +17,7 @@ test("testnavn er vanskelig", () => {
 
 	queue.publish(NumberEvent.with(42));
 	queue.publish(StringEvent.with("Test"));
-	queue.publish(EmptyEvent.without());
+	queue.publish(EmptyEvent);
 
 	expect(numberCallback.mock.calls.length).toBe(1);
 	expect(numberCallback.mock.calls[0][0]).toBe(42);

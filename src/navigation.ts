@@ -7,13 +7,22 @@ export class LinkFactory {
 		this.callback = callback;
 	}
 
-	createLink(url: string, text: string) {
-		const element = createElement("a", { href: url }, text);
+	createLink(
+		url: string,
+		text?: string,
+		className?: string
+	): HTMLAnchorElement {
+		const element = createElement(
+			"a",
+			{ href: url },
+			text
+		) as HTMLAnchorElement;
 		element.onclick = (e: MouseEvent) => {
 			e.preventDefault();
 			window.history.pushState({}, "", url);
 			this.onNavigation();
 		};
+		if (className) element.className = className;
 		return element;
 	}
 

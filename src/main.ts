@@ -1,5 +1,5 @@
 import { mainPage } from ".";
-import { removeAllChildren } from "./dom-utils";
+import { createChild, removeAllChildren } from "./dom-utils";
 import { LinkFactory } from "./navigation";
 import { oware } from "./Oware/draw";
 import { perlinCircle } from "./perlin/circle";
@@ -19,11 +19,26 @@ function main() {
 		}
 	});
 	const header = document.getElementById("header");
-	header?.appendChild(linkFactory.createLink("/", "Home"));
-	header?.appendChild(linkFactory.createLink("/oware", "Oware"));
-	header?.appendChild(linkFactory.createLink("/circle", "Circle"));
+	header?.appendChild(headerLink("/", "Home"));
+	header?.appendChild(headerLink("/oware", "Oware"));
+	header?.appendChild(headerLink("/circle", "Circle"));
 
 	linkFactory.onNavigation();
+
+	function headerLink(url: string, text: string): HTMLAnchorElement {
+		const anchor = linkFactory.createLink(url);
+		anchor.classList.add(
+			"text-white",
+			"align-middle",
+			"hover:bg-emerald-600",
+			"px-2",
+			"text-lg",
+			"flex",
+			"items-center"
+		);
+		createChild(anchor, "span", {}, text);
+		return anchor;
+	}
 }
 
 export type AppFunction = (appDiv: HTMLDivElement) => void;

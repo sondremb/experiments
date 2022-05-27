@@ -40,9 +40,10 @@ export function createSvgElement(
 export function createChild(
 	parent: HTMLElement,
 	tag: TagName,
-	attributes?: AttributeMap
+	attributes?: AttributeMap,
+	innerHtml?: string
 ): HTMLElement {
-	const element = createElement(tag, attributes);
+	const element = createElement(tag, attributes, innerHtml);
 	parent.appendChild(element);
 	return element;
 }

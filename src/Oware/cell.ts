@@ -28,10 +28,14 @@ export class Cell {
 		this.text = this.createText();
 
 		this.manager.queue.subscribe(SetStateEvent, () => this.updateState());
-		this.manager.queue.subscribe(ResetPreviewMoveEvent, () =>
-			this.updateText()
-		);
-		this.manager.queue.subscribe(SetPreviewStateEvent, () => this.updateText());
+		this.manager.queue.subscribe(ResetPreviewMoveEvent, () => {
+			this.updateText();
+			this.updateSeeds();
+		});
+		this.manager.queue.subscribe(SetPreviewStateEvent, () => {
+			this.updateSeeds();
+			this.updateText();
+		});
 	}
 
 	updateState() {
@@ -64,7 +68,7 @@ export class Cell {
 			this.manager.previewState === null ||
 			this.previewValue === this.stateValue
 		) {
-			if (this.stateValue > 0) {
+			if (this.stateValue >= 9) {
 				text = String(this.stateValue);
 			}
 		} else {
@@ -136,8 +140,10 @@ export class Cell {
 	}
 
 	private updateSeeds(): void {
-		if (this.seedCount === this.stateValue) return;
-		const target = Math.max(0, Math.min(this.stateValue, 9));
+		const target = Math.max(
+			0,
+			Math.min(Math.max(this.stateValue, this.previewValue ?? 0), 9)
+		);
 		while (this.seedCount > target && this.seedGroup.lastChild) {
 			this.seedGroup.removeChild(this.seedGroup.lastChild);
 		}
@@ -145,12 +151,15 @@ export class Cell {
 			this.seedGroup.appendChild(this.createSeed());
 		}
 		for (let i = 0; i < this.seedCount; i++) {
+			const isPreview = i >= this.stateValue || this.previewValue === 0;
 			const seed: SVGCircleElement = this.seedGroup.children.item(
 				i
 			) as SVGCircleElement;
 			const offset = this.getSeedOffsetPosition(this.seedCount, i);
 			setAttributes(seed, {
 				transform: `translate(${offset.x}, ${offset.y})`,
+				fill: isPreview ? "none" : "black",
+				"stroke-dasharray": isPreview ? "10" : "",
 			});
 		}
 	}
@@ -159,6 +168,7 @@ export class Cell {
 		return createSvgElement("circle", {
 			r: String(this.manager.radius / 4),
 			fill: "black",
+			stroke: "black",
 			cx: String(this.position.x),
 			cy: String(this.position.y),
 			class: "transition-transform pointer-events-none",

@@ -149,7 +149,7 @@ export class Cell {
 			fill: "black",
 			cx: String(this.position.x),
 			cy: String(this.position.y),
-			class: "transition-transform",
+			class: "transition-transform pointer-events-none",
 		}) as SVGCircleElement;
 	}
 

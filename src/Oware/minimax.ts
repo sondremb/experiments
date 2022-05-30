@@ -5,7 +5,7 @@ import {
 	nextState,
 	otherPlayer,
 	Player,
-	Winner,
+	Result,
 } from "./game";
 
 export function negamax(
@@ -15,7 +15,7 @@ export function negamax(
 	beta: number
 ): number {
 	const winner = getWinner(node);
-	if (depth <= 0 || winner !== Winner.None) {
+	if (depth <= 0 || winner !== Result.NotFinished) {
 		return getHeuristicValue(node);
 	}
 
@@ -36,6 +36,6 @@ function getHeuristicValue(node: GameState): number {
 	const winner = getWinner(node);
 	if (winner === Player.One) return -50;
 	if (winner === Player.Two) return 50;
-	if (winner === Winner.Draw) return 0;
+	if (winner === Result.Draw) return 0;
 	return node.points[Player.Two] - node.points[Player.One];
 }

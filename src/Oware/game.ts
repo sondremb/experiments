@@ -3,6 +3,13 @@ export enum Player {
 	Two = 2,
 }
 
+export enum Result {
+	NotFinished,
+	Draw,
+}
+
+export type Winner = Player | Result;
+
 export const otherPlayer = (player: Player): Player =>
 	player === Player.One ? Player.Two : Player.One;
 
@@ -86,22 +93,18 @@ export const getLegalMoves = (state: GameState): Move[] => {
 	return moves.filter((m) => m.legality === Legality.Maybe).map((m) => m.move);
 };
 
-export enum Winner {
-	None,
-	Draw,
-}
-
-export const getWinner = (state: GameState): Player | Winner => {
+export const getWinner = (state: GameState): Player | Result => {
 	const p1Points = state.points[Player.One];
 	const p2Points = state.points[Player.Two];
-	if (p1Points > 24 && p2Points > 24) {
+	if (p1Points > 24 || p2Points > 24) {
 		if (p1Points > p2Points) return Player.One;
 		if (p1Points < p2Points) return Player.Two;
-		return Winner.Draw;
+		// det skal ikke være mulig at begge to kommer seg over 24, men for sikkerhets skyld:
+		return Result.Draw;
 	}
-	if (p1Points === 24 && p2Points === 24) return Winner.Draw;
+	if (p1Points === 24 && p2Points === 24) return Result.Draw;
 	if (getLegalMoves(state).length === 0) return otherPlayer(state.player);
-	return Winner.None;
+	return Result.NotFinished;
 };
 
 export const isValidState = (state: GameState): boolean => {

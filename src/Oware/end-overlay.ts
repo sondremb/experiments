@@ -1,6 +1,6 @@
 import { createSvgElement } from "../dom-utils";
 import { Vector2 } from "../math";
-import { ResetGameEvent, SetStateEvent } from "./events";
+import { Events } from "./events";
 import { Player, Result, Winner } from "./game";
 import { Manager } from "./game-manager";
 
@@ -17,7 +17,7 @@ export class EndOverlay {
 		this.group.appendChild(this.createButton());
 		this.group.classList.add("hidden");
 
-		this.manager.queue.subscribe(SetStateEvent, () => {
+		this.manager.queue.subscribe(Events.SetState, () => {
 			if (this.manager.winner === Result.NotFinished) {
 				this.group.classList.add("hidden");
 			} else {
@@ -79,7 +79,7 @@ export class EndOverlay {
 				"cursor-pointer fill-emerald-900 hover:fill-emerald-800 origin-center transition-transform active:scale-105",
 		}) as SVGRectElement;
 		buttonRect.onclick = () => {
-			this.manager.queue.publish(ResetGameEvent);
+			this.manager.queue.publish(Events.ResetGame);
 		};
 		buttonGroup.appendChild(buttonRect);
 

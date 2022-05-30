@@ -3,14 +3,7 @@ import { Vector2 } from "../math";
 import { Cell } from "./cell";
 import { EndOverlay } from "./end-overlay";
 import { EventQueue } from "./event-queue";
-import {
-	DoMoveEvent,
-	PreviewMoveEvent,
-	ResetGameEvent,
-	ResetPreviewMoveEvent,
-	SetPreviewStateEvent,
-	SetStateEvent,
-} from "./events";
+import { Events } from "./events";
 import {
 	GameState,
 	getLegalMoves,
@@ -48,18 +41,18 @@ export class Manager {
 		this.createScoreLabels();
 		this.createEndOverlay();
 
-		this.queue.subscribe(SetStateEvent, () =>
+		this.queue.subscribe(Events.SetState, () =>
 			setTimeout(() => this.aiMove(), 1000)
 		);
 
-		this.queue.subscribe(ResetGameEvent, () => {
+		this.queue.subscribe(Events.ResetGame, () => {
 			this.state = initialState;
 			this.winner = getWinner(this.state);
 			this.previewState = null;
-			this.queue.publish(SetStateEvent.with(this.state));
+			this.queue.publish(Events.SetState.with(this.state));
 		});
 
-		this.queue.publish(SetStateEvent.with(this.state));
+		this.queue.publish(Events.SetState.with(this.state));
 	}
 
 	aiMove() {
@@ -90,22 +83,23 @@ export class Manager {
 	}
 
 	resetPreview() {
+		this.queue.publish(Events.ResetPreviewMove);
 		this.previewState = null;
-		this.queue.publish(ResetPreviewMoveEvent);
+		this.queue.publish(Events.SetPreviewState.with(this.previewState));
 	}
 
 	previewMove(move: Move) {
-		this.queue.publish(PreviewMoveEvent.with(move));
+		this.queue.publish(Events.PreviewMove.with(move));
 		this.previewState = nextState(this.state, move);
-		this.queue.publish(SetPreviewStateEvent.with(this.previewState));
+		this.queue.publish(Events.SetPreviewState.with(this.previewState));
 	}
 
 	doMove(move: Move) {
 		this.resetPreview();
-		this.queue.publish(DoMoveEvent.with(move));
+		this.queue.publish(Events.DoMove.with(move));
 		this.state = nextState(this.state, move);
 		this.winner = getWinner(this.state);
-		this.queue.publish(SetStateEvent.with(this.state));
+		this.queue.publish(Events.SetState.with(this.state));
 	}
 
 	get center(): Vector2 {

@@ -1,10 +1,6 @@
 import { createSvgElement, setAttributes } from "../dom-utils";
 import { Vector2 } from "../math";
-import {
-	ResetPreviewMoveEvent,
-	SetPreviewStateEvent,
-	SetStateEvent,
-} from "./events";
+import { Events } from "./events";
 import { Move } from "./game";
 import { Manager } from "./game-manager";
 
@@ -27,12 +23,8 @@ export class Cell {
 		this.seedGroup = this.createSeeds();
 		this.text = this.createText();
 
-		this.manager.queue.subscribe(SetStateEvent, () => this.updateState());
-		this.manager.queue.subscribe(ResetPreviewMoveEvent, () => {
-			this.updateText();
-			this.updateSeeds();
-		});
-		this.manager.queue.subscribe(SetPreviewStateEvent, () => {
+		this.manager.queue.subscribe(Events.SetState, () => this.updateState());
+		this.manager.queue.subscribe(Events.SetPreviewState, () => {
 			this.updateSeeds();
 			this.updateText();
 		});

@@ -4,8 +4,8 @@ export enum Player {
 }
 
 export enum Result {
-	NotFinished,
-	Draw,
+	NotFinished = 3,
+	Draw = 4,
 }
 
 export type Winner = Player | Result;

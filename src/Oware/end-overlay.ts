@@ -18,10 +18,11 @@ export class EndOverlay {
 		this.group.classList.add("hidden");
 
 		this.manager.queue.subscribe(Events.SetState, () => {
-			if (this.manager.winner === Result.NotFinished) {
+			const winner = this.manager.getWinner();
+			if (winner === Result.NotFinished) {
 				this.group.classList.add("hidden");
 			} else {
-				this.text.innerHTML = this.getTextForWinner(this.manager.winner);
+				this.text.innerHTML = this.getTextForWinner(winner);
 				this.group.classList.remove("hidden");
 			}
 		});

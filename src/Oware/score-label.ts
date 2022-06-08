@@ -32,6 +32,7 @@ export class ScoreLabel {
 			y: String(this.position.y),
 			"text-anchor": "middle",
 			stroke: "black",
+			class: "text-5xl",
 		}) as SVGTextElement;
 	}
 

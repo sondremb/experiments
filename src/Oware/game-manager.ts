@@ -1,5 +1,6 @@
 import { createSvgElement } from "../dom-utils";
 import { Vector2 } from "../math";
+import { AgentFunction, MinimaxAgent, RandomAgent } from "./agent";
 import { Cell } from "./cell";
 import { EndOverlay } from "./end-overlay";
 import { EventQueue } from "./event-queue";
@@ -12,9 +13,8 @@ import {
 	Move,
 	nextState,
 	Player,
-	Winner,
+	Result,
 } from "./game";
-import { negamax } from "./minimax";
 import { PreviewArrow } from "./preview-arrow";
 import { ScoreLabel } from "./score-label";
 
@@ -27,13 +27,11 @@ export class Manager {
 	gap: number = 30;
 	radius: number = 80;
 	queue: EventQueue;
-	winner: Winner;
 
 	constructor(width: number, height: number) {
 		this.queue = new EventQueue();
 		this.size = new Vector2(width, height);
 		this.state = initialState;
-		this.winner = getWinner(this.state);
 		this.previewState = null;
 		this.svg = this.createSvg();
 		this.cells = this.createCells();
@@ -41,13 +39,12 @@ export class Manager {
 		this.createScoreLabels();
 		this.createEndOverlay();
 
-		this.queue.subscribe(Events.SetState, () =>
-			setTimeout(() => this.aiMove(), 1000)
-		);
+		// fjern kommentaren på linja under for å se om Minimax-agenten er bedre enn ren tilfeldighet!
+		// this.setAgent(Player.One, RandomAgent);
+		this.setAgent(Player.Two, MinimaxAgent);
 
 		this.queue.subscribe(Events.ResetGame, () => {
 			this.state = initialState;
-			this.winner = getWinner(this.state);
 			this.previewState = null;
 			this.queue.publish(Events.SetState.with(this.state));
 		});
@@ -55,31 +52,35 @@ export class Manager {
 		this.queue.publish(Events.SetState.with(this.state));
 	}
 
-	aiMove() {
-		if (this.state.player === Player.One) return;
-		const legalMoves = this.getLegalMoves();
-		let bestMove: Move | null = null;
-		let bestValue = -Infinity;
-		for (const move of legalMoves) {
-			const value = negamax(
-				nextState(this.state, move),
-				10,
-				-Infinity,
-				Infinity
-			);
-			if (value > bestValue) {
-				bestValue = value;
-				bestMove = move;
-			}
-		}
-		if (bestMove !== null) {
-			this.previewMove(bestMove);
-			setTimeout(() => this.doMove(bestMove as Move), 500);
-		}
+	setAgent(player: Player, agent: AgentFunction) {
+		this.queue.subscribe(Events.SetState, () => {
+			const legalMoves = this.getLegalMoves();
+			// agent aktiveres kun på sin tur hvis spillet ikke er ferdig og det finnes gyldige trekk
+			if (
+				this.getWinner() !== Result.NotFinished ||
+				this.state.player !== player ||
+				legalMoves.length === 0
+			)
+				return;
+			// vi venter litt før vi gjør noe, det oppleves hyggeligere for menneskelig motspiller
+			setTimeout(() => {
+				const move = agent(this.state, getLegalMoves(this.state));
+				// vi previewer move i et halvt sekund
+				this.previewMove(move);
+				setTimeout(() => {
+					// sjekker at move fortsatt er gyldig før vi gjør det
+					if (getLegalMoves(this.state).includes(move)) this.doMove(move);
+				}, 500); // preview-tid i millisekunder
+			}, 1000); // ventetid i millisekunder
+		});
 	}
 
 	getLegalMoves() {
 		return getLegalMoves(this.state);
+	}
+
+	getWinner() {
+		return getWinner(this.state);
 	}
 
 	resetPreview() {
@@ -98,7 +99,6 @@ export class Manager {
 		this.resetPreview();
 		this.queue.publish(Events.DoMove.with(move));
 		this.state = nextState(this.state, move);
-		this.winner = getWinner(this.state);
 		this.queue.publish(Events.SetState.with(this.state));
 	}
 

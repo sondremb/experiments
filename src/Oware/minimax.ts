@@ -8,6 +8,10 @@ import {
 	Result,
 } from "./game";
 
+type Heuristic = (node: GameState) => number;
+
+// implementasjon av negamax med alpha-beta-pruning
+// https://en.wikipedia.org/wiki/Negamax#Negamax_with_alpha_beta_pruning
 export function negamax(
 	node: GameState,
 	depth: number,
@@ -16,7 +20,7 @@ export function negamax(
 ): number {
 	const winner = getWinner(node);
 	if (depth <= 0 || winner !== Result.NotFinished) {
-		return getHeuristicValue(node);
+		return heuristic(node);
 	}
 
 	const legalMoves = getLegalMoves(node);
@@ -32,10 +36,12 @@ export function negamax(
 	return value;
 }
 
-function getHeuristicValue(node: GameState): number {
+const heuristic: Heuristic = (node: GameState): number => {
+	const player = node.player;
+	const opponent = otherPlayer(player);
 	const winner = getWinner(node);
-	if (winner === Player.One) return -50;
-	if (winner === Player.Two) return 50;
+	if (winner === player) return -50;
+	if (winner === opponent) return 50;
 	if (winner === Result.Draw) return 0;
-	return node.points[Player.Two] - node.points[Player.One];
-}
+	return node.points[opponent] - node.points[player];
+};
